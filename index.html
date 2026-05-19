@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness UMG - Apoyo Psicológico</title>
+    <style>
+        :root {
+            --umg-blue: #003366;
+            --umg-light: #f4f7f9;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--umg-light); color: #333; }
+        header { background-color: var(--umg-blue); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.5rem; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-primary { background-color: var(--umg-blue); color: white; }
+        .btn-primary:hover { background-color: #002244; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .login-container { display: flex; justify-content: center; align-items: center; height: 80vh; }
+        .login-box { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--umg-blue); color: white; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: white; }
+        .alert-success { background-color: var(--success); }
+        .chat-box { height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; background: #f9f9f9; margin-bottom: 10px; border-radius: 4px;}
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 4px; max-width: 80%; }
+        .msg-student { background: #e1f5fe; margin-right: auto; }
+        .msg-psico { background: #e8f5e9; margin-left: auto; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header id="main-header" class="hidden">
+        <h1>🧠 Wellness UMG</h1>
+        <div>
+            <span id="user-role-display" style="margin-right: 15px;"></span>
+            <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- LOGIN -->
+    <div id="view-login" class="login-container">
+        <div class="login-box">
+            <h2 style="color: var(--umg-blue); margin-bottom: 20px;">Sistema de Apoyo Psicológico</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 20px;">Universidad Mariano Gálvez - Villa Nueva</p>
+            
+            <button class="btn btn-success" style="width: 100%; margin-bottom: 15px; padding: 15px;" onclick="loginAsStudent()">
+                Acceso Anónimo Estudiante
+            </button>
+            
+            <hr style="margin: 20px 0;">
+            <div class="input-group">
+                <label>Usuario (Staff)</label>
+                <input type="text" id="login-user" placeholder="Ej. psico / admin">
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="login-pass" placeholder="Contraseña">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="loginAsStaff()">Ingresar</button>
+            <p style="font-size: 0.8rem; margin-top: 10px; color: #666;">Demo: User: psico/admin | Pass: 1234</p>
+        </div>
+    </div>
+
+    <!-- VISTA ESTUDIANTE -->
+    <div id="view-student" class="container hidden">
+        <div class="card">
+            <h3>Tu ID de Sesión Anónima: <span id="anon-id" style="color: var(--umg-blue);"></span></h3>
+            <p><small>Usa este ID si necesitas referencia, tu identidad real está protegida.</small></p>
+        </div>
+
+        <div class="card">
+            <h3>Programar Cita</h3>
+            <div id="student-alert"></div>
+            <div class="input-group">
+                <label>Tipo de Cita</label>
+                <select id="cita-tipo">
+                    <option value="virtual">Virtual (Zoom/Teams)</option>
+                    <option value="presencial">Presencial (Villa Nueva)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Descripción breve de tu necesidad (Opcional)</label>
+                <textarea id="cita-desc" rows="3" placeholder="Ej: Estrés por exámenes finales..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="requestAppointment()">Solicitar Cita</button>
+        </div>
+
+        <div class="card">
+            <h3>Mis Citas Programadas</h3>
+            <table>
+                <thead>
+                    <tr><th>Estado</th><th>Tipo</th><th>Detalle</th></tr>
+                </thead>
+                <tbody id="student-appointments"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- VISTA PSICÓLOGO -->
+    <div id="view-psico" class="container hidden">
+        <div class="card">
+            <h3>Solicitudes de Citas Pendientes</h3>
+            <table>
+                <thead>
+                    <tr><th>ID Estudiante</th><th>Tipo</th><th>Descripción</th><th>Acción</th></tr>
+                </thead>
+                <tbody id="psico-pending"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Chat de Emergencia Rápida (Simulado)</h3>
+            <p><small>Selecciona un estudiante aceptado para chatear.</small></p>
+            <select id="chat-select" onchange="loadChat()"><option value="">-- Seleccionar --</option></select>
+            <div class="chat-box" id="chat-box"></div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chat-msg" style="flex:1; padding: 10px;" placeholder="Escribe un mensaje...">
+                <button class="btn btn-primary" onclick="sendMsg()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA ADMINISTRADOR -->
+    <div id="view-admin" class="container hidden">
+        <h2>Panel de Administración (Ingeniería UMG)</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+            <div class="card" style="text-align: center; border-top: 5px solid var(--umg-blue);">
+                <h3 id="stat-sessions">0</h3>
+                <p>Estudiantes Conectados (Histórico)</p>
+            </div>
+            <div class="card" style="text-align: center; border-top: 5px solid var(--warning);">
+                <h3 id="stat-pending">0</h3>
+                <p>Citas Pendientes</p>
+            </div>
+            <div class="card" style="text-align: center; border-top: 5px solid var(--success);">
+                <h3 id="stat-approved">0</h3>
+                <p>Citas Aprobadas</p>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 20px;">
+            <h3>Registro de Actividad del Sistema</h3>
+            <div id="admin-logs" style="background: #333; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DATOS SIMULADA (localStorage) ---
+        function getDB() {
+            let db = localStorage.getItem('umg_wellness_db');
+            return db ? JSON.parse(db) : { appointments: [], logs: [], sessions: 0 };
+        }
+        function saveDB(db) {
+            localStorage.setItem('umg_wellness_db', JSON.stringify(db));
+        }
+        function addLog(action) {
+            let db = getDB();
+            db.logs.unshift(`[${new Date().toLocaleString()}] ${action}`);
+            saveDB(db);
+        }
+
+        // --- AUTENTICACIÓN ---
+        let currentUser = null;
+        let currentAnonId = null;
+
+        function loginAsStudent() {
+            currentAnonId = 'UMG-Anon-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            currentUser = 'student';
+            let db = getDB();
+            db.sessions++;
+            saveDB(db);
+            addLog(`Estudiante anónimo conectado: ${currentAnonId}`);
+            showView('student');
+        }
+
+        function loginAsStaff() {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            if (pass === '1234') {
+                currentUser = user;
+                addLog(`Inicio de sesión staff: ${user}`);
+                showView(user);
+            } else {
+                alert('Credenciales incorrectas');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            currentAnonId = null;
+            showView('login');
+        }
+
+        // --- ROUTING (VISTAS) ---
+        function showView(role) {
+            document.getElementById('main-header').classList.remove('hidden');
+            document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${role}`).classList.remove('hidden');
+            document.getElementById('user-role-display').innerText = role === 'student' ? `Estudiante: ${currentAnonId}` : `Rol: ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+            
+            if (role === 'student') initStudentView();
+            if (role === 'psico') initPsicoView();
+            if (role === 'admin') initAdminView();
+        }
+
+        // --- LÓGICA ESTUDIANTE ---
+        function initStudentView() {
+            document.getElementById('anon-id').innerText = currentAnonId;
+            renderStudentAppointments();
+        }
+
+        function requestAppointment() {
+            const tipo = document.getElementById('cita-tipo').value;
+            const desc = document.getElementById('cita-desc').value;
+            let db = getDB();
+            db.appointments.push({
+                id: Date.now().toString(),
+                studentId: currentAnonId,
+                type: tipo,
+                description: desc,
+                status: 'pendiente',
+                chat: []
+            });
+            saveDB(db);
+            addLog(`Nueva cita solicitada por ${currentAnonId} (${tipo})`);
+            document.getElementById('student-alert').innerHTML = '<div class="alert alert-success">Cita solicitada con éxito. Espera confirmación del psicólogo.</div>';
+            document.getElementById('cita-desc').value = '';
+            setTimeout(() => document.getElementById('student-alert').innerHTML = '', 3000);
+            renderStudentAppointments();
+        }
+
+        function renderStudentAppointments() {
+            const db = getDB();
+            const tbody = document.getElementById('student-appointments');
+            const myAppointments = db.appointments.filter(a => a.studentId === currentAnonId);
+            tbody.innerHTML = myAppointments.map(a => `
+                <tr>
+                    <td><span style="padding: 3px 8px; border-radius: 10px; background: ${a.status === 'pendiente' ? 'var(--warning)' : 'var(--success)'}; color: ${a.status === 'pendiente' ? '#333' : 'white'}">${a.status.toUpperCase()}</span></td>
+                    <td>${a.type}</td>
+                    <td>${a.description || 'Sin descripción'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- LÓGICA PSICÓLOGO ---
+        function initPsicoView() {
+            renderPsicoPending();
+            updateChatSelect();
+        }
+
+        function renderPsicoPending() {
+            const db = getDB();
+            const pending = db.appointments.filter(a => a.status === 'pendiente');
+            const tbody = document.getElementById('psico-pending');
+            tbody.innerHTML = pending.map(a => `
+                <tr>
+                    <td><code>${a.studentId}</code></td>
+                    <td>${a.type}</td>
+                    <td>${a.description || 'N/A'}</td>
+                    <td><button class="btn btn-success" onclick="approveAppointment('${a.id}')">Aceptar / Contactar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function approveAppointment(id) {
+            let db = getDB();
+            let app = db.appointments.find(a => a.id === id);
+            if (app) {
+                app.status = 'aprobada';
+                saveDB(db);
+                addLog(`Cita aprobada para ${app.studentId}`);
+                renderPsicoPending();
+                updateChatSelect();
+            }
+        }
+
+        function updateChatSelect() {
+            const db = getDB();
+            const approved = db.appointments.filter(a => a.status === 'aprobada');
+            const select = document.getElementById('chat-select');
+            select.innerHTML = '<option value="">-- Seleccionar Estudiante --</option>' + 
+                approved.map(a => `<option value="${a.studentId}">${a.studentId}</option>`).join('');
+        }
+
+        function loadChat() {
+            const studentId = document.getElementById('chat-select').value;
+            const chatBox = document.getElementById('chat-box');
+            if (!studentId) { chatBox.innerHTML = ''; return; }
+            const db = getDB();
+            const app = db.appointments.find(a => a.studentId === studentId && a.status === 'aprobada');
+            if (app) {
+                chatBox.innerHTML = app.chat.map(m => 
+                    `<div class="msg msg-${m.sender}"><b>${m.sender === 'psico' ? 'Tú' : 'Estudiante'}:</b> ${m.text}</div>`
+                ).join('');
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function sendMsg() {
+            const studentId = document.getElementById('chat-select').value;
+            const text = document.getElementById('chat-msg').value.trim();
+            if (!studentId || !text) return;
+            
+            let db = getDB();
+            let app = db.appointments.find(a => a.studentId === studentId && a.status === 'aprobada');
+            if (app) {
+                app.chat.push({ sender: 'psico', text: text });
+                saveDB(db);
+                document.getElementById('chat-msg').value = '';
+                loadChat();
+                addLog(`Mensaje enviado a ${studentId}`);
+            }
+        }
+
+        // --- LÓGICA ADMIN ---
+        function initAdminView() {
+            const db = getDB();
+            document.getElementById('stat-sessions').innerText = db.sessions;
+            document.getElementById('stat-pending').innerText = db.appointments.filter(a => a.status === 'pendiente').length;
+            document.getElementById('stat-approved').innerText = db.appointments.filter(a => a.status === 'aprobada').length;
+            
+            const logBox = document.getElementById('admin-logs');
+            logBox.innerHTML = db.logs.map(l => `<div>${l}</div>`).join('');
+        }
+
+        // Inicializar vista de login al cargar
+        showView('login');
+    </script>
+</body>
+</html>
